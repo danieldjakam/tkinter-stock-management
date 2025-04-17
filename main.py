@@ -65,14 +65,15 @@ class StockApp:
                 messagebox.showerror("Erreur", "Veuillez remplir tous les champs")
                 return
             
-            cursor.execute("SELECT * FROM Users WHERE username_Users=%s", 
-                          (username,))
+            cursor.execute("SELECT * FROM Users WHERE username_Users=%s OR email_Users=%s", 
+                          (username, username))
             user = cursor.fetchone()
             
 
             if user:
                 mdp = user[3]
                 mdp = mdp.encode('utf-8')
+
                 if bcrypt.checkpw(password.encode('utf-8'), mdp):
                     self.current_user = user[0]  # Stocke l'ID de l'utilisateur
                     messagebox.showinfo("Succès", "Connexion réussie!")
@@ -125,11 +126,11 @@ class StockApp:
             #hashage
             mdp_bytes = password.encode('utf-8')
             hash = bcrypt.hashpw(mdp_bytes, bcrypt.gensalt())
-            hash_str = hash.decode('utf-8')
+
             # Ajoute le nouvel utilisateur
             cursor.execute(
                 "INSERT INTO Users (username_Users, email_Users, password_Users) VALUES (%s, %s, %s)",
-                (username, email, hash_str)
+                (username, email, hash)
             )
             self.db.commit()
             messagebox.showinfo("Succès", "Compte créé avec succès!")
@@ -203,7 +204,7 @@ class StockApp:
 
         # Champ utilisateur
         self.login_username = ctk.CTkEntry(form_container, 
-                                         placeholder_text="Nom d'utilisateur",
+                                         placeholder_text="Nom d'utilisateur ou email",
                                          fg_color="#F0EDFF", 
                                          text_color="#1C1C1C",
                                          border_width=0, 
