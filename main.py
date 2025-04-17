@@ -71,13 +71,14 @@ class StockApp:
             
 
             if user:
-                # print(user)
                 mdp = user[3]
-
+                mdp = mdp.encode('utf-8')
                 if bcrypt.checkpw(password.encode('utf-8'), mdp):
                     self.current_user = user[0]  # Stocke l'ID de l'utilisateur
                     messagebox.showinfo("Succès", "Connexion réussie!")
-                    self.show_main_app()  # À implémenter
+                    app = StockApp("data.db")
+                    app.show_main_interface()
+                    # self.show_main_app()  # À implémenter
                 else:
                     messagebox.showerror("Erreur", "Mot de passe incorrect")
             else:
@@ -124,11 +125,11 @@ class StockApp:
             #hashage
             mdp_bytes = password.encode('utf-8')
             hash = bcrypt.hashpw(mdp_bytes, bcrypt.gensalt())
-
+            hash_str = hash.decode('utf-8')
             # Ajoute le nouvel utilisateur
             cursor.execute(
                 "INSERT INTO Users (username_Users, email_Users, password_Users) VALUES (%s, %s, %s)",
-                (username, email, hash)
+                (username, email, hash_str)
             )
             self.db.commit()
             messagebox.showinfo("Succès", "Compte créé avec succès!")
@@ -168,9 +169,6 @@ class StockApp:
         else:
             self.slide_animation(self.register_frame, self.login_frame, "right", x_sart=0)
 
-    def clear_widgets(self):
-        for widget in self.root.winfo_children():
-            widget.destroy()
     def show_register_page(self):
         self.slide_animation(self.login_frame, self.register_frame, "left")
 
