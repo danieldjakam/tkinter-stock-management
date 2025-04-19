@@ -83,14 +83,14 @@ class StockApp():
                 mdp = mdp.encode('utf-8')
 
                 if bcrypt.checkpw(password.encode('utf-8'), mdp):
-                    # self.current_user = user[0]  # Stocke l'ID de l'utilisateur
+                    self.current_user = user[0]  # Stocke l'ID de l'utilisateur
                     # messagebox.showinfo("Succès", "Connexion réussie!")
-                    # self.show_main_interface()
+                    self.show_main_interface()
                     
-                    self.current_user = user[0]
-                    messagebox.showinfo("Succès", "Connexion réussie!")
+                    # self.current_user = user[0]
+                    # messagebox.showinfo("Succès", "Connexion réussie!")
                     # on ferme la fenêtre de login pour passer à MainApp
-                    self.root.destroy()
+                    # self.root.destroy()
                 else:
                     messagebox.showerror("Erreur", "Mot de passe incorrect")
             else:
@@ -157,7 +157,7 @@ class StockApp():
             return Image.open(path)
         return None
 
-    def slide_animation(self, from_frame, to_frame, direction, x_sart = 300):
+    def slide_animation(self, from_frame, to_frame, direction, x_sart = 350):
         """Effectue le slide entre deux frames"""
         x_start = x_sart if direction == "left" else -x_sart
         x_end = 0
@@ -169,7 +169,7 @@ class StockApp():
             if (direction == "left" and frame_x > x_end) or (direction == "right" and frame_x < x_end):
                 from_frame.place(x=frame_x - x_end if direction == "left" else frame_x + x_end)
                 to_frame.place(x=frame_x)
-                self.root.after(5, lambda: animate(frame_x - 25 if direction == "left" else frame_x + 25))
+                self.root.after(5, lambda: animate(frame_x - 50 if direction == "left" else frame_x + 50))
             else:
                 from_frame.place_forget()
                 to_frame.place(x=0, y=0, relwidth=1, relheight=1)
@@ -204,6 +204,28 @@ class StockApp():
         if confirm:
             self.current_user = None
 
+            if self.main_container:
+                self.main_container.destroy()
+
+            # Charger les images
+            self.login_img = self.load_image("assets/login.png")
+            self.register_img = self.load_image("assets/register.png")
+
+            # Container principal pour le slide
+            self.main_container = tk.Frame(self.root, bg="white")
+            self.main_container.pack(fill="both", expand=True)
+
+            # Création des deux frames (login/register)
+            self.login_frame = tk.Frame(self.main_container, bg="white")
+            self.register_frame = tk.Frame(self.main_container, bg="white")
+
+            # Afficher la page de login initiale
+            self.build_login_form()
+            self.build_register_form()
+            self.show_login_page(False)
+            # self.build_login_form()
+            # self.build_register_form()
+            # self.show_login_page(False)
 
     def build_login_form(self):
         self.current_image = self.login_img
