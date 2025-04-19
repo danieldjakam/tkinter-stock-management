@@ -12,6 +12,252 @@ from mysql.connector import Error
 email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 mdp_regex = r'^.{8,}$'
 
+PRIMARY_COLOR = "#5038ED"
+BG_COLOR = "#F8F9FC"
+TEXT_COLOR = "#1F1F1F"
+SIDEBAR_BG = "#FFFFFF"
+import tkinter as tk
+import tkinter as tk
+
+class Sidebar(tk.Frame):
+    def __init__(self, master, callback, logout):
+        super().__init__(master, bg=SIDEBAR_BG, width=220)
+        self.callback = callback
+        self.logout = logout
+        self.pack_propagate(False)
+
+        self.selected = "Produits"
+        self.buttons = {}
+
+        # Logo
+        logo = tk.Label(
+            self, text="📦 StockApp",
+            bg=SIDEBAR_BG, fg=PRIMARY_COLOR,
+            font=("Segoe UI", 18, "bold"),
+            anchor="w", padx=20
+        )
+        logo.pack(pady=(25, 35), anchor="w")
+
+        menu_items = {
+            "Categories": "📁",
+            "Produits":    "🧾",
+            "Mouvements":  "🔄",
+            "Users":       "👥",
+            "Fournisseurs":"🚚"
+        }
+
+        for name, icon in menu_items.items():
+            btn = tk.Label(
+                self, text=f"{icon}  {name}",
+                bg=SIDEBAR_BG, fg=TEXT_COLOR,
+                font=("Segoe UI", 11), anchor="w",
+                padx=20, pady=10, cursor="hand2"
+            )
+            btn.name = name
+            btn.pack(fill="x", pady=0)
+
+            btn.bind("<Button-1>", lambda e, b=btn: self.select(b))
+            btn.bind("<Enter>",    lambda e, b=btn: self.on_enter(b))
+            btn.bind("<Leave>",    lambda e, b=btn: self.on_leave(b))
+
+            self.buttons[name] = btn
+
+        # espace pour pousser le footer
+        tk.Label(self, bg=SIDEBAR_BG).pack(expand=True, fill="both")
+
+        # séparateur
+        tk.Frame(self, height=1, bg="#34495e").pack(fill="x", padx=10, pady=(0,10))
+
+        # Aide
+        help_btn = tk.Label(
+            self, text="❓  Aide",
+            bg=SIDEBAR_BG, fg=TEXT_COLOR,
+            font=("Segoe UI", 11), anchor="w",
+            pady=10,
+            padx=20, cursor="hand2"
+        )
+        help_btn.pack(fill="x", pady=0)
+        help_btn.bind("<Enter>", lambda e: help_btn.config(bg=PRIMARY_COLOR, fg='white'))
+        help_btn.bind("<Leave>", lambda e: help_btn.config(bg=SIDEBAR_BG, fg=TEXT_COLOR))
+        # help_btn.bind("<Button-1>", lambda e: …)  # si besoin
+
+        # Déconnexion
+        logout_btn = tk.Label(
+            self, text="🚪  Déconnexion",
+            bg=SIDEBAR_BG, fg="#e74c3c",
+            pady=10,
+            font=("Segoe UI", 11, "bold"), anchor="w",
+            padx=20, cursor="hand2"
+        )
+        logout_btn.pack(fill="x", pady=(0,20))
+        logout_btn.bind("<Button-1>", lambda e: self.logout())
+        logout_btn.bind("<Enter>", lambda e: logout_btn.config(bg=PRIMARY_COLOR, fg='white'))
+        logout_btn.bind("<Leave>", lambda e: logout_btn.config(bg=SIDEBAR_BG, fg="#e74c3c"))
+
+        # Initialisation de l’état visuel
+        self.update_buttons()
+
+    def select(self, btn):
+        """Clic sur un bouton : on change la sélection, on notifie le callback et on rafraîchit l’affichage."""
+        self.selected = btn.name
+        self.callback(self.selected)
+        self.update_buttons()
+
+    def on_enter(self, btn):
+        """Hover : effet en surbrillance."""
+        btn.config(bg=PRIMARY_COLOR, fg="white")
+
+    def on_leave(self, btn):
+        """Fin de hover : on remet couleurs normales selon la sélection."""
+        if btn.name == self.selected:
+            btn.config(bg=PRIMARY_COLOR, fg="white")
+        else:
+            btn.config(bg=SIDEBAR_BG, fg=TEXT_COLOR)
+
+    def update_buttons(self):
+        """Applique à tous les boutons leur couleur selon qu’ils soient sélectionnés ou non."""
+        for btn in self.buttons.values():
+            if btn.name == self.selected:
+                btn.config(bg=PRIMARY_COLOR, fg="white")
+            else:
+                btn.config(bg=SIDEBAR_BG, fg=TEXT_COLOR)
+
+class Topbar(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master, bg=BG_COLOR, height=50)
+        self.pack_propagate(False)
+
+        self.title = tk.Label(self, text="Produits", bg=BG_COLOR, fg=TEXT_COLOR,
+                              font=("Segoe UI", 16, "bold"))
+        self.title.pack(side="left", padx=20)
+
+        self.profile = tk.Label(self, text="👤 John Doe", bg=BG_COLOR, fg=TEXT_COLOR,
+                                font=("Segoe UI", 11))
+        self.profile.pack(side="right", padx=20)
+
+class Tabs(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master, bg=BG_COLOR)
+        self.tabs = []
+        for name in ["History", "Scheduled", "Requested"]:
+            tab = tk.Label(self, text=name, bg=BG_COLOR,
+                           fg=PRIMARY_COLOR if name == "History" else TEXT_COLOR,
+                           font=("Segoe UI", 11, "bold" if name == "History" else "normal"),
+                           padx=10, pady=5, bd=2, relief="flat")
+            tab.pack(side="left", padx=5)
+            if name == "History":
+                tab.config(relief="solid", bd=1, bg="white")
+            self.tabs.append(tab)
+
+        self.add_btn = tk.Button(self, text="+ Add", bg=PRIMARY_COLOR, fg="white",
+                                 font=("Segoe UI", 10, "bold"), relief="flat", padx=15, pady=3,
+                                 activebackground="#2980B9", activeforeground="white")
+        self.add_btn.pack(side="right", padx=10)
+
+
+class ProductRow(tk.Frame):
+    def __init__(self, master, name, date, amount):
+        super().__init__(master, bg="white", height=50)
+        self.pack_propagate(False)
+
+        tk.Label(self, text=name, bg="white", fg=TEXT_COLOR,
+                 font=("Segoe UI", 10)).pack(side="left", padx=20)
+        tk.Label(self, text=date, bg="white", fg="gray",
+                 font=("Segoe UI", 9)).pack(side="left", padx=10)
+        tk.Label(self, text=amount, bg="white", fg=PRIMARY_COLOR,
+                 font=("Segoe UI", 10, "bold")).pack(side="left", padx=10)
+
+        menu = tk.Menubutton(self, text="⋮", bg="white", fg=TEXT_COLOR, relief="flat")
+        menu.menu = tk.Menu(menu, tearoff=0)
+        menu["menu"] = menu.menu
+        menu.menu.add_command(label="Edit")
+        menu.menu.add_command(label="Delete")
+        menu.pack(side="right", padx=20)
+
+
+class ProductPage(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master, bg=BG_COLOR)
+        self.pack(fill="both", expand=True)
+
+        self.topbar = Topbar(self)
+        self.topbar.pack(fill="x")
+
+        self.tabs = Tabs(self)
+        self.tabs.pack(fill="x", padx=10, pady=10)
+
+        # Section scrollable
+        self.canvas = tk.Canvas(self, bg="white", highlightthickness=0)
+        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.inner_frame = tk.Frame(self.canvas, bg="white")
+        self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
+
+        self.inner_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+
+        for i in range(50):
+            row = ProductRow(self.inner_frame, f"Produit {i+1}", "Avr 18, 2025", f"{(i+1)*10} FCFA")
+            row.pack(fill="x", pady=8, padx=10)
+
+    def add_product(self):
+        self.show_product_form()
+
+    def edit_product(self, product):
+        self.show_product_form(product)
+
+    def show_product_form(self, product=None):
+        form = tk.Toplevel(self)
+        form.title("Produit")
+        form.geometry("350x300")
+        form.configure(bg="white")
+        form.grab_set()
+        form.eval('tk::PlaceWindow . center')
+
+        name_var = tk.StringVar(value=product["name"] if product else "")
+        desc_var = tk.StringVar(value=product["desc"] if product else "")
+        price_var = tk.DoubleVar(value=product["price"] if product else 0.0)
+
+        fields = [("Nom", name_var), ("Description", desc_var), ("Prix", price_var)]
+        for label, var in fields:
+            tk.Label(form, text=label, bg="white", font=("Segoe UI", 10)).pack(pady=(10, 0))
+            tk.Entry(form, textvariable=var, font=("Segoe UI", 10), relief="solid", bd=1).pack(pady=5, ipadx=5)
+
+        tk.Button(form, text="Enregistrer", bg=PRIMARY_COLOR, fg="white", font=("Segoe UI", 10, "bold"),
+                  relief="flat", command=form.destroy).pack(pady=20)
+
+class CategoryPage(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master, bg=BG_COLOR)
+        self.pack(fill="both", expand=True)
+
+        self.topbar = Topbar(self)
+        self.topbar.pack(fill="x")
+
+        self.tabs = Tabs(self)
+        self.tabs.pack(fill="x", padx=10, pady=10)
+
+        self.list_frame = tk.Frame(self, bg='white')
+        self.list_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Ajouter un Scrollbar pour éviter le débordement
+        self.canvas = tk.Canvas(self.list_frame)
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        self.scrollbar = tk.Scrollbar(self.list_frame, orient="vertical", command=self.canvas.yview)
+        self.scrollbar.pack(side="right", fill="y")
+
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.inner_frame = tk.Frame(self.canvas)
+        self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
+
+        # Mettre à jour la taille de la fenêtre interne pour éviter le défilement
+        self.inner_frame.update_idletasks()
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
 
 class StockApp():
     def __init__(self, root):
@@ -184,6 +430,7 @@ class StockApp():
 
     def show_register_page(self):
         self.slide_animation(self.login_frame, self.register_frame, "left")
+   
     def show_main_interface(self):
     # Effacer le contenu actuel (login/register)
         for widget in self.main_container.winfo_children():
@@ -193,12 +440,47 @@ class StockApp():
         self.main_app_frame = tk.Frame(self.main_container, bg="white")
         self.main_app_frame.pack(fill="both", expand=True)
 
-        welcome_label = tk.Label(self.main_app_frame, text=f"Bienvenue, utilisateur {self.current_user} !", font=("Arial", 18), bg="white")
-        welcome_label.pack(pady=30)
-        logout_btn = ctk.CTkButton(self.main_app_frame, text="Déconnexion", command=self.logout_user,
-                           fg_color="#E74C3C", hover_color="#C0392B", text_color="white",
-                           font=("Arial", 12), corner_radius=10, width=150, height=40)
-        logout_btn.pack(pady=10)
+        # Sidebar
+        self.sidebar = Sidebar(self.main_app_frame, self.show_page, self.logout_user)
+        self.sidebar.pack(side="left", fill="y")
+
+        # Contenu principal
+        self.container = tk.Frame(self.main_app_frame, bg=BG_COLOR)
+        self.container.pack(side="right", fill="both", expand=True)
+
+        # Dictionnaire des pages
+        self.pages = {
+            "Produits": ProductPage(self.container),
+            "Categories": CategoryPage(self.container),
+            "Mouvements": CategoryPage(self.container),
+            "Users": CategoryPage(self.container),
+            "Fournisseurs": CategoryPage(self.container),
+        }
+
+        # Masquer toutes les pages au départ
+        for page in self.pages.values():
+            page.pack_forget()
+
+        # Afficher la page initiale
+        self.show_page("Produits")
+
+    def handle_sidebar_click(self, page_name):
+        self.sidebar.highlight_selected(page_name)
+        
+        self.clear_main_area()
+        
+        if page_name == "Produits":
+            page = ProductPage(self.main_content_frame)
+        elif page_name == "Categories":
+            page = CategoryPage(self.main_content_frame)
+        # ... autres pages
+
+        page.pack(fill="both", expand=True)
+
+    def show_page(self, name):
+        for page in self.pages.values():
+            page.pack_forget()
+        self.pages[name].pack(fill="both", expand=True)
     def logout_user(self):
         confirm = messagebox.askyesno("Déconnexion", "Voulez-vous vraiment vous déconnecter ?")
         if confirm:
