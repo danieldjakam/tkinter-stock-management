@@ -9,7 +9,6 @@ import bcrypt
 from mysql.connector import Error
 from datetime import date
 
-
 email_regex = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 mdp_regex = r'^.{8,}$'
 
@@ -209,7 +208,6 @@ class ProductRow(tk.Frame):
 
         menu_btn.grid(row=0, column=4, padx=(5, 15), sticky="e")
 
-
 class ProductPage(tk.Frame):
     def __init__(self, master):
         super().__init__(master, bg=BG_COLOR)
@@ -386,7 +384,6 @@ class CategoryPage(tk.Frame):
         # Mettre à jour la taille de la fenêtre interne pour éviter le défilement
         self.inner_frame.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
-
 
 class StockApp():
     def __init__(self, root):
