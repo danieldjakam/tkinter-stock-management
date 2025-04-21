@@ -150,41 +150,50 @@ class Tabs(tk.Frame):
                            padx=10, pady=5, bd=2, relief="flat", cursor="hand2")
             tab.pack(side="left", padx=5)
             self.tabs.append(tab)
-
-        self.add_btn = tk.Label(self, text="Add+", bg=SIDEBAR_BG, fg=TEXT_COLOR,
-                                font=("Segoe UI", 11), padx=20, pady=7, cursor="hand2")
+        
+        self.add_btn = ctk.CTkButton(self, 
+                                 text="Add+",
+                                 fg_color="#5038ED", 
+                                 hover_color="#3d2fc2",
+                                 text_color="white", 
+                                 corner_radius=10,
+                                 font=("Arial", 12, "bold"), 
+                                 width=80, 
+                                 height=30, 
+                                 command=lambda: self.on_add_click()
+                                )
         self.add_btn.pack(side="right", padx=10)
-        self.add_btn.bind("<Button-1>",
-            lambda e: self.on_add_click() if self.on_add_click else None)
-        self.add_btn.bind("<Enter>",
-            lambda e: self.add_btn.config(bg=PRIMARY_COLOR, fg="white"))
-        self.add_btn.bind("<Leave>",
-            lambda e: self.add_btn.config(bg=SIDEBAR_BG, fg=TEXT_COLOR))
 
 class ProductRow(tk.Frame):
-    def __init__(self, master, name, date_str, amount,
+    def __init__(self, master, name, date_str, amount, quantity,
                  edit_callback=None, delete_callback=None):
         super().__init__(master, bg="white", height=50)
         self.name = name
         self.date_str = date_str
         self.amount = amount
+        self.quantity = quantity
 
-        content = tk.Frame(self, bg="white")
-        content.pack(fill="both", expand=True)
+        self.columnconfigure(0, weight=0)
+        self.columnconfigure(1, weight=0)
+        self.columnconfigure(2, weight=0)
+        self.columnconfigure(3, weight=0)
+        self.columnconfigure(4, weight=1)
 
-        tk.Label(content, text=name, bg="white", fg=TEXT_COLOR,
-                 font=("Segoe UI", 10)).grid(row=0, column=0,
-                                             padx=(10, 5), sticky="w")
-        tk.Label(content, text=date_str, bg="white", fg="gray",
-                 font=("Segoe UI", 9)).grid(row=0, column=1,
-                                            padx=(5, 5), sticky="w")
-        tk.Label(content, text=amount, bg="white", fg=PRIMARY_COLOR,
-                 font=("Segoe UI", 10, "bold")).grid(row=0, column=2,
-                                                     padx=(5, 5), sticky="w")
-        content.grid_columnconfigure(3, weight=1)
+        tk.Label(self, text=name, bg="white", fg=TEXT_COLOR,
+                 font=("Segoe UI", 10), width=20, anchor="w").grid(row=0, column=0, padx=(10, 5), sticky="w")
+        
+        tk.Label(self, text=date_str, bg="white", fg="gray",
+                 font=("Segoe UI", 9), width=15, anchor="w").grid(row=0, column=1, padx=5, sticky="w")
+        
+        tk.Label(self, text=amount, bg="white", fg=PRIMARY_COLOR,
+                 font=("Segoe UI", 10, "bold"), width=15, anchor="w").grid(row=0, column=2, padx=5, sticky="w")
+        
+        tk.Label(self, text=quantity, bg="white", fg=TEXT_COLOR,
+                 font=("Segoe UI", 10), width=10, anchor="w").grid(row=0, column=3, padx=5, sticky="w")
 
-        menu_btn = tk.Menubutton(content, text="⋮", bg="white", fg=TEXT_COLOR,
-                                 relief="flat", cursor="hand2")
+        # Menu bouton à droite
+        menu_btn = tk.Menubutton(self, text="⋮", bg="white", fg=TEXT_COLOR,
+                                 relief="flat", cursor="hand2", width=5)
         menu = tk.Menu(menu_btn, tearoff=0)
         menu_btn["menu"] = menu
 
@@ -200,6 +209,7 @@ class ProductRow(tk.Frame):
 
         menu_btn.grid(row=0, column=4, padx=(5, 15), sticky="e")
 
+
 class ProductPage(tk.Frame):
     def __init__(self, master):
         super().__init__(master, bg=BG_COLOR)
@@ -214,8 +224,7 @@ class ProductPage(tk.Frame):
         self.tabs.pack(fill="x", padx=10, pady=10)
 
         self.canvas = tk.Canvas(self, bg="white", highlightthickness=0)
-        self.scrollbar = tk.Scrollbar(self, orient="vertical",
-                                      command=self.canvas.yview)
+        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
         self.scrollbar.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
@@ -226,13 +235,32 @@ class ProductPage(tk.Frame):
             "<Configure>",
             lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         )
+# En-tête du tableau
+        header = tk.Frame(self.inner_frame, bg="white")
+        header.pack(fill="x", padx=10, pady=(0, 5))
+
+        tk.Label(header, text="Nom", bg="white", fg=TEXT_COLOR,
+                 font=("Segoe UI", 10, "bold"), width=20, anchor="w").grid(row=0, column=0, padx=(10, 5))
+        tk.Label(header, text="Date", bg="white", fg=TEXT_COLOR,
+                 font=("Segoe UI", 10, "bold"), width=15, anchor="w").grid(row=0, column=1, padx=5)
+        tk.Label(header, text="Prix", bg="white", fg=TEXT_COLOR,
+                 font=("Segoe UI", 10, "bold"), width=15, anchor="w").grid(row=0, column=2, padx=5)
+        tk.Label(header, text="Quantité", bg="white", fg=TEXT_COLOR,
+                 font=("Segoe UI", 10, "bold"), width=10, anchor="w").grid(row=0, column=3, padx=5)
+        tk.Label(header, text="Actions", bg="white", fg=TEXT_COLOR,
+                 font=("Segoe UI", 10, "bold"), width=10, anchor="e").grid(row=0, column=5, padx=(5, 15))
+
+        # Ligne de séparation (facultative)
+        separator = tk.Frame(self.inner_frame, height=1, bg="#E0E0E0")
+        separator.pack(fill="x", padx=10, pady=(0, 5))
 
         # Exemple de remplissage
         for i in range(50):
             self.add_product_row(
                 f"Produit {i+1}",
                 "Avr 18, 2025",
-                f"{(i+1)*10} FCFA"
+                f"{(i+1)*10} FCFA",
+                i + 1
             )
 
     def add_product(self):
@@ -246,10 +274,10 @@ class ProductPage(tk.Frame):
         if row in self.product_rows:
             self.product_rows.remove(row)
 
-    def add_product_row(self, name, date_str, amount):
+    def add_product_row(self, name, date_str, amount, quantity=0):
         row = ProductRow(
             self.inner_frame,
-            name, date_str, amount,
+            name, date_str, amount, quantity,
             edit_callback=self.edit_product,
             delete_callback=self.delete_product
         )
@@ -262,20 +290,19 @@ class ProductPage(tk.Frame):
             initial = {
                 "name": row.name,
                 "desc": "Description",
-                "price": float(row.amount.replace(" FCFA", ""))
+                "price": float(row.amount.replace(" FCFA", "")),
+                "quantity": row.quantity
             }
         else:
-            initial = {"name": "", "desc": "", "price": 0.0}
+            initial = {"name": "", "desc": "", "price": 0.0, "quantity": 0.0}
 
         form = tk.Toplevel(self)
         form.title("Produit")
-        # Dimensions de base
-        width, height = 350, 300
+        width, height = 350, 400
         form.geometry(f"{width}x{height}")
         form.configure(bg="white")
         form.grab_set()
 
-        # Centrage manuel
         form.update_idletasks()
         sw = form.winfo_screenwidth()
         sh = form.winfo_screenheight()
@@ -283,35 +310,52 @@ class ProductPage(tk.Frame):
         y = (sh - height) // 2
         form.geometry(f"{width}x{height}+{x}+{y}")
 
-        name_var = tk.StringVar(value=initial["name"])
-        desc_var = tk.StringVar(value=initial["desc"])
-        price_var = tk.DoubleVar(value=initial["price"])
+        self.name_var = tk.StringVar(value=initial["name"])
+        self.desc_var = tk.StringVar(value=initial["desc"])
+        self.price_var = tk.DoubleVar(value=initial["price"])
+        self.quantity_var = tk.DoubleVar(value=initial["quantity"])
 
-        for label_text, var in [("Nom", name_var),
-                                ("Description", desc_var),
-                                ("Prix", price_var)]:
-            tk.Label(form, text=label_text, bg="white",
-                     font=("Segoe UI", 10)).pack(pady=(10, 0))
-            tk.Entry(form, textvariable=var,
-                     font=("Segoe UI", 10),
-                     relief="solid", bd=1).pack(pady=5, ipadx=5)
+        for label_text, var in [("Nom", self.name_var),
+                                ("Description", self.desc_var),
+                                ("Prix", self.price_var),
+                                ("Quantité", self.quantity_var)]:
+            tk.Label(form, text=label_text, bg="white", fg=TEXT_COLOR,
+                     font=("Segoe UI", 10)).pack(pady=(0, 0))
+
+            entry = ctk.CTkEntry(form,
+                                 placeholder_text=label_text,
+                                 fg_color="#F0EDFF",
+                                 textvariable=var,
+                                 text_color="#1C1C1C",
+                                 border_width=0,
+                                 corner_radius=10,
+                                 width=240,
+                                 height=40)
+            entry.pack(pady=10)
 
         def save():
-            name = name_var.get()
-            desc = desc_var.get()
-            price = price_var.get()
+            name = self.name_var.get()
+            desc = self.desc_var.get()
+            price = self.price_var.get()
+            quantity = self.quantity_var.get()
             formatted_price = f"{price} FCFA"
             if row:
                 self.delete_product(row)
             today_str = date.today().strftime("%b %d, %Y")
-            self.add_product_row(name, today_str, formatted_price)
+            self.add_product_row(name, today_str, formatted_price, quantity)
             form.destroy()
 
-        tk.Button(form, text="Enregistrer",
-                  bg=PRIMARY_COLOR, fg="white",
-                  font=("Segoe UI", 10, "bold"),
-                  relief="flat",
-                  command=save).pack(pady=20)
+        save_btn = ctk.CTkButton(form,
+                                 text="Enregistrer",
+                                 fg_color="#5038ED",
+                                 hover_color="#3d2fc2",
+                                 text_color="white",
+                                 corner_radius=10,
+                                 font=("Arial", 12, "bold"),
+                                 width=240,
+                                 height=40,
+                                 command=save)
+        save_btn.pack(pady=20)
 
 class CategoryPage(tk.Frame):
     def __init__(self, master):
